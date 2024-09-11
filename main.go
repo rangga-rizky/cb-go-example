@@ -21,7 +21,7 @@ func main() {
 	var ctx = context.Background()
 
 	cb := util.NewCB(*rdb)
-	cb.Register(ctx, "xixix", 5)
+	cb.Register(ctx, "tes_cb_agaon", 5, 1*time.Minute)
 
 	http.HandleFunc("/", simpleHandler(cb))
 	http.ListenAndServe(":8080", nil)
@@ -40,15 +40,17 @@ func simpleHandler(cb util.CB) http.HandlerFunc {
 			Timeout: 10 * time.Second,
 		}
 
-		_, err := client.Get("http://localhost:9090/")
-		if err != nil {
-			cb.Count(r.Context(), "xixix")
-			counter := cb.GetCounter(r.Context(), "xixix")
-			responseText = "your cb error counter: " + strconv.Itoa(counter)
-		}
-
-		if cb.IsOpen(r.Context(), "xixix") {
+		if cb.IsOpen(r.Context(), "tes_cb_agaon") {
 			responseText = "CB opened!"
+		} else {
+			_, err := client.Get("http://localhost:9090/")
+			if err != nil {
+				cb.Count(r.Context(), "tes_cb_agaon")
+				counter := cb.GetCounter(r.Context(), "tes_cb_agaon")
+				responseText = "your cb error counter: " + strconv.Itoa(counter)
+				fmt.Fprint(w, responseText)
+				return
+			}
 		}
 
 		fmt.Fprint(w, responseText)
